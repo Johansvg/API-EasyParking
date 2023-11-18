@@ -44,14 +44,15 @@ export class AuthService {
         // Buscar el id del usuario en base a su email
         const usuario = await this.usersservice.findOneByEmail(LoginDto.email);
         const id = usuario.id;
+        const nombre = usuario.name;
 
         // Generar token
         const payload = { email: user.email, role: user.role, id: usuario.id }; // Datos que se van a guardar en el token
         const token = await this.jwtservice.signAsync(payload);
 
-        const email = user.email;
+        
 
-        return {token};
+        return {token, nombre};
     }
 
 async profile ({email, role}): Promise<{ email: string; role: string; }> {

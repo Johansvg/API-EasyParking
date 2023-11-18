@@ -23,15 +23,18 @@ export class ParqueaderoMotosService {
       // Mejorar esto despues-------------------------------->
 
       // Definir capacidad del parqueadero
-      const capacidadParqueadero = 50;
+      // const capacidadParqueadero = 50;
       
       // Obtener vehiculo de la base de datos
       const vehiculo = await this.vehiculosService.findByPlaca(createParqueaderoMotoDto.placaVehiculoReg);
 
       // Validar capacidad del parqueadero
-      const cantidadVehiculos = await this.parqueaderoMotoRepository.count();
-      if (cantidadVehiculos >= capacidadParqueadero) {
+      let cantidadVehiculos = await this.parqueaderoMotoRepository.count();
+      if (cantidadVehiculos >= 50) {
         throw new BadRequestException('El parqueadero de motos se encuentra lleno');
+      }
+      else{
+        cantidadVehiculos = cantidadVehiculos + 1;
       }
 
       // Llenar Dto con datos del vehiculo
@@ -39,7 +42,14 @@ export class ParqueaderoMotosService {
       createParqueaderoMotoDto.tipoVehiculoReg = vehiculo.tipoVehiculo;
 
       // Registrar ingreso 
-      return await this.parqueaderoMotoRepository.save(createParqueaderoMotoDto);
+      await this.parqueaderoMotoRepository.save(createParqueaderoMotoDto);
+
+      // Retornar mensaje de ingreso exitoso
+      const porcentajeOcupacion = (cantidadVehiculos / 50) * 100;
+      return {
+          mensaje: 'Ingreso exitoso',
+         porcentajeOcupacion
+        };
     }
 
     async registrarSalida(createParqueaderoMotoDto: CreateParqueaderoMotoDto) {
@@ -54,7 +64,16 @@ export class ParqueaderoMotosService {
       await this.historialMotoRepository.save(registroHistorial);
 
       // // Eliminar registro de la tabla parqueadero-motos
-      return await this.deleteByPlaca(registroActual.placaVehiculoReg);
+      await this.deleteByPlaca(registroActual.placaVehiculoReg);
+
+      // Calcular nuevo porcentaje de ocupacion
+      let cantidadVehiculos = await this.parqueaderoMotoRepository.count();
+      const porcentajeOcupacion = (cantidadVehiculos / 50) * 100;
+      
+      return {
+        mensaje: 'Salida exitosa',
+        porcentajeOcupacion
+      };
     }
 
     // REVISAR 

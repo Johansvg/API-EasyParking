@@ -26,15 +26,18 @@ export class ParqueaderoCarrosService {
         createParqueaderoCarroDto.placaVehiculoReg = createParqueaderoCarroDto.placaVehiculoReg.replace(/\s+/g, '');
   
         // Definir capacidad del parqueadero
-        const capacidadParqueadero = 20;
+        // const capacidadParqueadero = 20;
         
         // Obtener vehiculo de la base de datos
         const vehiculo = await this.vehiculosService.findByPlaca(createParqueaderoCarroDto.placaVehiculoReg);
   
         // Validar capacidad del parqueadero
-        const cantidadVehiculos = await this.parqueaderoCarroRepository.count();
-        if (cantidadVehiculos >= capacidadParqueadero) {
+        let cantidadVehiculos = await this.parqueaderoCarroRepository.count();
+        if (cantidadVehiculos >= 20) {
           throw new BadRequestException('El parqueadero de carros se encuentra lleno');
+        }
+        else{
+          cantidadVehiculos = cantidadVehiculos + 1;
         }
   
         // Llenar Dto con datos del vehiculo
@@ -42,7 +45,12 @@ export class ParqueaderoCarrosService {
         createParqueaderoCarroDto.tipoVehiculoReg = vehiculo.tipoVehiculo;
         
         // Registrar ingreso 
-        return await this.parqueaderoCarroRepository.save(createParqueaderoCarroDto);
+        await this.parqueaderoCarroRepository.save(createParqueaderoCarroDto);
+
+        return {
+          mensaje: 'Ingreso exitoso',
+          porcentajeOcupacion: (cantidadVehiculos / 20) * 100
+        }
     }
 
     async registrarSalida(createParqueaderoCarroDto: CreateParqueaderoCarroDto) {
@@ -57,7 +65,14 @@ export class ParqueaderoCarrosService {
       await this.historialCarroRepository.save(registroHistorial);
 
       // Eliminar registro de la tabla parqueadero-carros
-      return await this.deleteByPlaca(registroActual.placaVehiculoReg);
+      await this.deleteByPlaca(registroActual.placaVehiculoReg);
+
+      const cantidadVehiculos = await this.parqueaderoCarroRepository.count();
+
+      return {
+        mensaje: 'Salida exitosa',
+        porcentajeOcupacion: (cantidadVehiculos / 20) * 100
+      }
 
     }
 
