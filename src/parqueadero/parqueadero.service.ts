@@ -72,9 +72,17 @@ export class ParqueaderoService {
 
   async salida(createParqueaderoDto: CreateParqueaderoDto) {
     // Validar que el vehiculo exista en la base de datos
-    const vehiculo = await this.vehiculosService.findByPlaca(createParqueaderoDto.placaVehiculoReg);
+    let vehiculo = await this.vehiculosService.findByPlaca(createParqueaderoDto.placaVehiculoReg);
     if (!vehiculo) {
-      throw new BadRequestException('El vehiculo no existe en la base de datos');
+      // Verificar si está en parqueadero de carros
+      let vehiculo = await this.estaEnParqueaderoCarros(createParqueaderoDto.placaVehiculoReg);
+      if (!vehiculo) {
+        // Verificar si está en parqueadero de motos
+        let vehiculo = await this.estaEnParqueaderoMotos(createParqueaderoDto.placaVehiculoReg);
+        if (!vehiculo) {
+          throw new BadRequestException('El vehiculo no existe en la base de datos');
+        }
+      }
     }
 
     // Determinar el tipo de vehiculo
