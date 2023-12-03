@@ -5,6 +5,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/rol.enum';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { CreateInvitadoDto } from './dto/create-invitado-moto.dto';
 
 
 @Controller('parqueadero-motos')
@@ -23,5 +24,12 @@ export class ParqueaderoMotosController {
   @UseGuards(AuthGuard, RolesGuard)
   salida(@Body() createParqueaderoMotoDto: CreateParqueaderoMotoDto) {
     return this.parqueaderoMotosService.registrarSalida(createParqueaderoMotoDto);
+  }
+
+  @Post('invitado')
+  @Roles(Role.Admin)
+  @UseGuards(AuthGuard, RolesGuard)
+  invitado(@Body() createInvitadoMoto: CreateInvitadoDto) {
+    return this.parqueaderoMotosService.registrarInvitado(createInvitadoMoto);
   }
 }

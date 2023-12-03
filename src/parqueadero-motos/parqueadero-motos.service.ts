@@ -6,6 +6,7 @@ import { ParqueaderoMoto } from './entities/parqueadero-moto.entity';
 import { HistorialMoto } from './entities/historial-motos.entity';
 import { Repository } from 'typeorm';
 import { VehiculosService } from 'src/vehiculos/vehiculos.service';
+import { CreateInvitadoDto } from 'src/parqueadero-motos/dto/create-invitado-moto.dto';
 
 @Injectable()
 export class ParqueaderoMotosService {
@@ -23,14 +24,14 @@ export class ParqueaderoMotosService {
       // Mejorar esto despues-------------------------------->
 
       // Definir capacidad del parqueadero
-      // const capacidadParqueadero = 50;
+      // const capacidadParqueadero = 100;
       
       // Obtener vehiculo de la base de datos
       const vehiculo = await this.vehiculosService.findByPlaca(createParqueaderoMotoDto.placaVehiculoReg);
 
       // Validar capacidad del parqueadero
       let cantidadVehiculos = await this.parqueaderoMotoRepository.count();
-      if (cantidadVehiculos >= 50) {
+      if (cantidadVehiculos >= 100) {
         throw new BadRequestException('El parqueadero de motos se encuentra lleno');
       }
       else{
@@ -44,15 +45,20 @@ export class ParqueaderoMotosService {
       // Registrar ingreso 
       await this.parqueaderoMotoRepository.save(createParqueaderoMotoDto);
 
-      // Retornar mensaje de ingreso exitoso
-      const porcentajeOcupacion = (cantidadVehiculos / 50) * 100;
+      // Retornar mensaje y cantidad de vehiculos en el parqueadero
       return {
           mensaje: 'Ingreso exitoso',
-         porcentajeOcupacion
+         cantidadVehiculos
         };
     }
 
     async registrarSalida(createParqueaderoMotoDto: CreateParqueaderoMotoDto) {
+
+      // Validar que el vehículo se encuentre en el parqueadero
+      const vehiculo = await this.findByPlaca(createParqueaderoMotoDto.placaVehiculoReg);
+      if (!vehiculo) {
+        throw new BadRequestException('El vehículo no se encuentra en el parqueadero');
+      }
 
       // Ingresar registro a la tabla historial
       const registroHistorial = new HistorialMoto();
@@ -66,14 +72,43 @@ export class ParqueaderoMotosService {
       // // Eliminar registro de la tabla parqueadero-motos
       await this.deleteByPlaca(registroActual.placaVehiculoReg);
 
-      // Calcular nuevo porcentaje de ocupacion
+      // Calcular cuantos vehiculos hay en el parqueadero
       let cantidadVehiculos = await this.parqueaderoMotoRepository.count();
-      const porcentajeOcupacion = (cantidadVehiculos / 50) * 100;
       
       return {
         mensaje: 'Salida exitosa',
-        porcentajeOcupacion
+        cantidadVehiculos
       };
+    }
+
+    async registrarInvitado(createInvitadoMoto : CreateInvitadoDto) {
+      // Validar que el vehículo no se encuentre en el parqueadero
+      const vehiculo = await this.findByPlaca(createInvitadoMoto.placaVehiculoReg);
+      if (vehiculo) {
+        throw new BadRequestException('El vehículo ya se encuentra en el parqueadero');
+      }
+
+      let cantidadVehiculos = await this.parqueaderoMotoRepository.count();
+      if (cantidadVehiculos >= 100) {
+        throw new BadRequestException('El parqueadero de motos se encuentra lleno');
+      }
+      else{
+        cantidadVehiculos = cantidadVehiculos + 1;
+      }
+
+      // Llenar Dto con datos del vehiculo
+      let invitadoMoto = new CreateInvitadoDto();
+      invitadoMoto.horaIngreso = new Date();
+      invitadoMoto.placaVehiculoReg = createInvitadoMoto.placaVehiculoReg;
+      invitadoMoto.tipoVehiculoReg = createInvitadoMoto.tipoVehiculoReg;
+
+      // Registrar ingreso
+      await this.parqueaderoMotoRepository.save(invitadoMoto);
+
+      return {
+          mensaje: 'Ingreso exitoso',
+         cantidadVehiculos
+        };
     }
 
     // REVISAR 

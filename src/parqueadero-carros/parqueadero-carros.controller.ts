@@ -27,4 +27,13 @@ export class ParqueaderoCarrosController {
     ){
       return this.parqueaderoCarrosService.registrarSalida(createParqueaderoCarroDto);
     }
+
+    @Post('invitado')
+    @Roles(Role.Admin)
+    @UseGuards(AuthGuard, RolesGuard)
+    invitado(
+      @Body() createParqueaderoCarroDto: CreateParqueaderoCarroDto,
+      ){
+        return this.parqueaderoCarrosService.registrarInvitado(createParqueaderoCarroDto);
+      }
 }

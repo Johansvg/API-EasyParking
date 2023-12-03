@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, CanActivate } from '@nestjs/common';
 import { CreateParqueaderoCarroDto } from './dto/create-parqueadero-carro.dto';
 import { UpdateParqueaderoCarroDto } from './dto/update-parqueadero-carro.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -33,7 +33,7 @@ export class ParqueaderoCarrosService {
   
         // Validar capacidad del parqueadero
         let cantidadVehiculos = await this.parqueaderoCarroRepository.count();
-        if (cantidadVehiculos >= 20) {
+        if (cantidadVehiculos >= 30) {
           throw new BadRequestException('El parqueadero de carros se encuentra lleno');
         }
         else{
@@ -49,11 +49,17 @@ export class ParqueaderoCarrosService {
 
         return {
           mensaje: 'Ingreso exitoso',
-          porcentajeOcupacion: (cantidadVehiculos / 20) * 100
+          cantidadVehiculos
         }
     }
 
     async registrarSalida(createParqueaderoCarroDto: CreateParqueaderoCarroDto) {
+
+      // Validar que el vehículo se encuentre en el parqueadero
+      const vehiculo = await this.findByPlaca(createParqueaderoCarroDto.placaVehiculoReg);
+      if (!vehiculo) {
+        throw new BadRequestException('El vehículo no se encuentra en el parqueadero');
+      }
 
       // Ingresar registro a la tabla historial
       const registroHistorial = new HistorialCarro();
@@ -71,7 +77,35 @@ export class ParqueaderoCarrosService {
 
       return {
         mensaje: 'Salida exitosa',
-        porcentajeOcupacion: (cantidadVehiculos / 20) * 100
+        cantidadVehiculos
+      }
+
+    }
+
+    async registrarInvitado(createParqueaderoCarroDto: CreateParqueaderoCarroDto) {
+      // Validar que el carro no se encuentre en el parqueadero
+      const vehiculo = await this.findByPlaca(createParqueaderoCarroDto.placaVehiculoReg);
+      if (vehiculo) {
+        throw new BadRequestException('El vehiculo ya se encuentra en el parqueadero');
+      }
+      
+      let cantidadVehiculos = await this.parqueaderoCarroRepository.count();
+      if (cantidadVehiculos >= 30) {
+        throw new BadRequestException('El parqueadero de carros se encuentra lleno');
+      }
+      else{
+        cantidadVehiculos = cantidadVehiculos + 1;
+      }
+
+      // Llenar Dto con datos del vehiculo
+      createParqueaderoCarroDto.horaIngreso = new Date();
+
+      // Registrar ingreso
+      await this.parqueaderoCarroRepository.save(createParqueaderoCarroDto);
+
+      return {
+        mensaje: 'Ingreso exitoso',
+        cantidadVehiculos
       }
 
     }

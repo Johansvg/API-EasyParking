@@ -45,6 +45,7 @@ export class AuthService {
         const usuario = await this.usersservice.findOneByEmail(LoginDto.email);
         const id = usuario.id;
         const nombre = usuario.name;
+        const role = usuario.role;
 
         // Generar token
         const payload = { email: user.email, role: user.role, id: usuario.id }; // Datos que se van a guardar en el token
@@ -52,7 +53,7 @@ export class AuthService {
 
         
 
-        return {token, nombre};
+        return {token, nombre, role};
     }
 
 async profile ({email, role}): Promise<{ email: string; role: string; }> {
