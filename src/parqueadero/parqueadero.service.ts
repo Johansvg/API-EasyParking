@@ -80,7 +80,6 @@ export class ParqueaderoService {
       }
     }
 
-    console.log(vehiculo);
 
     // Determinar el tipo de vehiculo
     const tipo = vehiculo.tipoVehiculoReg.toLowerCase();
